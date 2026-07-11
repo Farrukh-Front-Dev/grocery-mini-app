@@ -8,11 +8,13 @@
     "shared"
   ],
   "scripts": {
+    "start": "bash run.sh",
     "dev": "node scripts/dev.js",
     "dev:backend": "npm run dev -w backend --if-present",
     "dev:frontend": "npm run dev -w frontend --if-present",
     "build": "node scripts/build.js",
     "db:generate": "npm run db:generate -w backend --if-present",
-    "db:migrate": "npm run db:migrate -w backend --if-present"
+    "db:migrate": "npm run db:migrate -w backend --if-present",
+    "setup": "npm run db:migrate -w backend && npm run db:seed -w backend"
   }
 }
