@@ -6,6 +6,7 @@ import { logger } from "../middleware/logger";
 import type { OrderStatus } from "@grocery/shared";
 
 export const bot = new Bot(config.BOT_TOKEN);
+bot.catch((err) => logger.warn({ err: err.message }, "Bot error"));
 
 bot.command("start", async (ctx) => {
   const id = ctx.from?.id;
@@ -74,6 +75,7 @@ export async function notifyStatusChange(orderId: number, status: OrderStatus, u
 }
 
 export function startBot() {
-  bot.start();
-  logger.info("Bot started");
+  bot.start()
+    .then(() => logger.info("Bot started"))
+    .catch((err) => logger.warn({ err: err.message }, "Bot failed to start (invalid token?)"));
 }
