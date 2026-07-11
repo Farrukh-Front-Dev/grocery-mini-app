@@ -4,6 +4,8 @@ import { config } from "../config";
 import { db, schema } from "../db";
 import { eq } from "drizzle-orm";
 
+const DEV_USER_ID = 1;
+
 interface TelegramUser {
   id: number;
   first_name?: string;
@@ -54,28 +56,31 @@ declare global {
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
-  if (!auth?.startsWith("tma ")) {
-    res.status(401).json({ error: "Unauthorized" });
+
+  if (auth?.startsWith("tma ")) {
+    const user = validateInitData(auth.slice(4));
+    if (!user) {
+      res.status(401).json({ error: "Invalid initData" });
+      return;
+    }
+    req.telegramUser = user;
+    const dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, user.id)).get();
+    req.userId = dbUser?.id;
+    req.isAdmin = config.ADMIN_IDS.includes(user.id);
+    next();
     return;
   }
 
-  const user = validateInitData(auth.slice(4));
-  if (!user) {
-    res.status(401).json({ error: "Invalid initData" });
+  if (config.isDev) {
+    req.telegramUser = { id: DEV_USER_ID, first_name: "Dev" };
+    const dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, DEV_USER_ID)).get();
+    req.userId = dbUser?.id ?? DEV_USER_ID;
+    req.isAdmin = true;
+    next();
     return;
   }
 
-  req.telegramUser = user;
-
-  const dbUser = db
-    .select()
-    .from(schema.users)
-    .where(eq(schema.users.telegramId, user.id))
-    .get();
-
-  req.userId = dbUser?.id;
-  req.isAdmin = config.ADMIN_IDS.includes(user.id);
-  next();
+  res.status(401).json({ error: "Unauthorized" });
 }
 
 export function adminMiddleware(req: Request, res: Response, next: NextFunction) {

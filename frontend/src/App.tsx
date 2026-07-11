@@ -30,7 +30,7 @@ export default function App() {
   const [page, setPage] = useState<Page>("products");
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { ready } = useTelegram();
+  const { ready, isTelegram } = useTelegram();
   const cartCount = useCartStore((s) => s.totalQuantity());
   const fetchCart = useCartStore((s) => s.fetch);
 
@@ -38,12 +38,8 @@ export default function App() {
     ready();
     const path = window.location.pathname;
     setIsAdmin(path.startsWith("/admin"));
-
     if (path === "/admin") setPage("admin-products");
-
-    const initData = window.Telegram?.WebApp?.initData;
-    if (initData) fetchCart();
-
+    fetchCart();
     setLoading(false);
   }, []);
 
@@ -70,6 +66,11 @@ export default function App() {
 
   return (
     <div className="page">
+      {!isTelegram && (
+        <div className="text-center text-xs py-1.5 font-medium" style={{ background: "color-mix(in srgb, var(--tg-warning) 15%, transparent)", color: "var(--tg-warning)" }}>
+          🛠 Development mode — Telegram'da ochilsa to'liq ishlaydi
+        </div>
+      )}
       <Header title={current.title} />
       <div className="content">{current.component}</div>
       <BottomNav tabs={tabs} active={page} onChange={(id) => setPage(id as Page)} badge={cartCount} />

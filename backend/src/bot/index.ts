@@ -75,7 +75,11 @@ export async function notifyStatusChange(orderId: number, status: OrderStatus, u
 }
 
 export function startBot() {
+  if (config.isDev || !config.BOT_TOKEN || config.BOT_TOKEN === "dev_token_placeholder") {
+    logger.info("Bot skipped (dev mode / no token)");
+    return;
+  }
   bot.start()
     .then(() => logger.info("Bot started"))
-    .catch((err) => logger.warn({ err: err.message }, "Bot failed to start (invalid token?)"));
+    .catch((err) => logger.warn({ err: err.message }, "Bot failed to start"));
 }
