@@ -5,6 +5,9 @@ import { getExpenses } from "../../services/finance";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 import { formatSom, formatDate, statusLabel, statusBadgeClass } from "../../utils/format";
 
 export function AdminHistory() {
@@ -48,47 +51,45 @@ export function AdminHistory() {
           { id: "completed" as const, label: "Yetkazilgan", count: completed.length },
           { id: "cancelled" as const, label: "Bekor qilingan", count: cancelled.length },
         ].map((t) => (
-          <button
+          <Button
             key={t.id}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium border-none cursor-pointer ${tab === t.id ? "" : "opacity-60"}`}
-            style={{
-              background: tab === t.id ? "var(--tg-button)" : "var(--tg-secondary-bg)",
-              color: tab === t.id ? "var(--tg-button-text)" : "var(--tg-text)",
-            }}
+            className="flex-1"
+            variant={tab === t.id ? "primary" : "outline"}
+            size="sm"
             onClick={() => setTab(t.id)}
           >
             {t.label} ({t.count})
-          </button>
+          </Button>
         ))}
       </div>
 
       {sorted.length === 0 && expenses.length === 0 ? (
-        <EmptyState icon="📜" title="Tarix yo'q" description="Hali hech qanday ma'lumot yo'q" />
+        <EmptyState title="Tarix yo'q" description="Hali hech qanday ma'lumot yo'q" />
       ) : (
         <div className="space-y-2">
           {sorted.map((item) => (
-            <div key={`order-${item.id}`} className="rounded-2xl p-4" style={{ background: "var(--tg-secondary-bg)" }}>
+            <Card key={`order-${item.id}`}>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-semibold">Buyurtma #{item.id}</span>
-                <span className={`badge ${statusBadgeClass(item.status)}`}>{statusLabel(item.status)}</span>
+                <Badge variant={statusBadgeClass(item.status) as any}>{statusLabel(item.status)}</Badge>
               </div>
               <div className="flex justify-between text-sm">
                 <span style={{ color: "var(--tg-hint)" }}>{formatDate(item.createdAt)}</span>
                 <span className="font-semibold">{formatSom(item.total)}</span>
               </div>
               {item.cancelReason && <p className="text-xs mt-1 text-red-500">Sabab: {item.cancelReason}</p>}
-            </div>
+            </Card>
           ))}
 
           {tab === "all" && expenses.map((e) => (
-            <div key={`expense-${e.id}`} className="rounded-2xl p-4" style={{ background: "color-mix(in srgb, var(--tg-destructive) 8%, transparent)" }}>
+            <Card key={`expense-${e.id}`} className="" style={{ background: "color-mix(in srgb, var(--tg-destructive) 8%, transparent)" }}>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-medium">Xarajat</span>
                 <span className="text-sm font-semibold" style={{ color: "var(--tg-destructive)" }}>-{formatSom(e.amount)}</span>
               </div>
               <p className="text-sm">{e.description}</p>
               <p className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatDate(e.createdAt)}</p>
-            </div>
+            </Card>
           ))}
         </div>
       )}

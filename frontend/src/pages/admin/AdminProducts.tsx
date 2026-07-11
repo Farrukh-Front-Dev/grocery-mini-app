@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Product, Category } from "@grocery/shared";
 import { getProducts, getCategories, createProduct, updateProduct, deleteProduct } from "../../services/products";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Select } from "../../components/ui/select";
+import { Modal } from "../../components/ui/modal";
 import { formatSom } from "../../utils/format";
 
 export function AdminProducts() {
@@ -78,51 +84,55 @@ export function AdminProducts() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm" style={{ color: "var(--tg-hint)" }}>{products.length} ta mahsulot</p>
-        <button className="btn btn-primary !w-auto !px-4 !py-2" onClick={openCreate}>+ Qo'shish</button>
+        <Button size="sm" onClick={openCreate}>
+          <Plus size={16} />
+          Qo'shish
+        </Button>
       </div>
 
       {products.length === 0 ? (
-        <EmptyState icon="📦" title="Mahsulotlar yo'q" description="Yangi mahsulot qo'shing" />
+        <EmptyState title="Mahsulotlar yo'q" description="Yangi mahsulot qo'shing" />
       ) : (
         <div className="space-y-2">
           {products.map((p) => (
-            <div key={p.id} className="card rounded-xl" style={{ background: "var(--tg-secondary-bg)" }}>
+            <Card key={p.id} className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">{p.name}</p>
                 <p className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatSom(p.price)} / {p.unit} · {p.stockQty} {p.unit}</p>
               </div>
-              <div className="flex gap-2">
-                <button className="text-sm border-none bg-transparent cursor-pointer" style={{ color: "var(--tg-button)" }} onClick={() => openEdit(p)}>✏️</button>
-                <button className="text-sm border-none bg-transparent cursor-pointer" onClick={() => handleDelete(p.id)}>🗑</button>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil size={16} /></Button>
+                <Button variant="ghost" size="icon" style={{ color: "var(--tg-destructive)" }} onClick={() => handleDelete(p.id)}><Trash2 size={16} /></Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-4">{editing ? "Tahrirlash" : "Yangi mahsulot"}</h2>
-            <div className="space-y-3">
-              <input className="input-field" placeholder="Nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <input className="input-field" placeholder="Narxi (so'm)" type="number" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-              <input className="input-field" placeholder="Stock" type="number" value={form.stockQty || ""} onChange={(e) => setForm({ ...form, stockQty: Number(e.target.value) })} />
-              <select className="select-btn" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value as "kg" })}>
-                <option value="kg">kg</option>
-                <option value="litr">litr</option>
-                <option value="dona">dona</option>
-              </select>
-              <div className="flex gap-2">
-                <button className="btn btn-primary flex-1" disabled={saving || !form.name} onClick={handleSave}>
-                  {saving ? "Saqlanmoqda..." : "Saqlash"}
-                </button>
-                <button className="btn btn-outline flex-1" onClick={() => setShowModal(false)}>Bekor qilish</button>
-              </div>
-            </div>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={editing ? "Tahrirlash" : "Yangi mahsulot"}>
+        <div className="space-y-3">
+          <Input placeholder="Nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input placeholder="Narxi (so'm)" type="number" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+          <Input placeholder="Stock" type="number" value={form.stockQty || ""} onChange={(e) => setForm({ ...form, stockQty: Number(e.target.value) })} />
+          <Select
+            options={[
+              { value: "kg", label: "kg" },
+              { value: "litr", label: "litr" },
+              { value: "dona", label: "dona" },
+            ]}
+            value={form.unit}
+            onChange={(e) => setForm({ ...form, unit: e.target.value as "kg" })}
+          />
+          <div className="flex gap-2">
+            <Button className="flex-1" loading={saving} disabled={!form.name} onClick={handleSave}>
+              Saqlash
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
+              Bekor qilish
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

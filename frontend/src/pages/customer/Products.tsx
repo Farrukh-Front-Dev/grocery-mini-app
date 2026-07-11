@@ -5,6 +5,8 @@ import { QuantityInput } from "../../components/shared/QuantityInput";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import { formatSom } from "../../utils/format";
 import { useCartStore } from "../../store/cart";
 
@@ -46,7 +48,7 @@ export function Products() {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium border-none cursor-pointer whitespace-nowrap ${
+              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium border-none cursor-pointer whitespace-nowrap transition-all ${
                 selectedCat === cat.id ? "" : "opacity-60"
               }`}
               style={{
@@ -62,7 +64,7 @@ export function Products() {
       )}
 
       {products.length === 0 ? (
-        <EmptyState icon="📦" title="Mahsulotlar yo'q" description="Hozircha hech qanday mahsulot qo'shilmagan" />
+        <EmptyState title="Mahsulotlar yo'q" description="Hozircha hech qanday mahsulot qo'shilmagan" />
       ) : filtered.length === 0 ? (
         <div className="py-8 text-center text-sm" style={{ color: "var(--tg-hint)" }}>
           Bu kategoriyada mahsulot yo'q
@@ -85,10 +87,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (qty: number
   const lowStock = !outOfStock && product.stockQty < 5;
 
   return (
-    <div
-      className="rounded-2xl p-3 flex flex-col"
-      style={{ background: "var(--tg-secondary-bg)" }}
-    >
+    <Card className="flex flex-col p-3">
       <div className="w-full aspect-square rounded-xl mb-2 flex items-center justify-center text-3xl" style={{ background: "color-mix(in srgb, var(--tg-button) 8%, transparent)" }}>
         🥦
       </div>
@@ -101,15 +100,14 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (qty: number
       </p>
       <div className="flex items-center justify-between mt-auto">
         <QuantityInput value={qty} step={product.step} max={product.stockQty} disabled={outOfStock} onChange={setQty} />
-        <button
-          className="w-9 h-9 rounded-full flex items-center justify-center text-lg border-none cursor-pointer disabled:opacity-40"
-          style={{ background: outOfStock ? "#ccc" : "var(--tg-button)", color: "var(--tg-button-text)" }}
+        <Button
+          size="icon"
           disabled={outOfStock}
           onClick={() => { onAdd(qty); }}
         >
           +
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

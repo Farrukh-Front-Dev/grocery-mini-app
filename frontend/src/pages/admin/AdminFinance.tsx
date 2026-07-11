@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import { getFinanceSummary, getExpenses, createExpense } from "../../services/finance";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Modal } from "../../components/ui/modal";
 import { formatSom, formatDate } from "../../utils/format";
 
 export function AdminFinance() {
@@ -64,51 +69,51 @@ export function AdminFinance() {
         </div>
       </div>
 
-      <div className="rounded-2xl p-4 mb-4" style={{ background: "var(--tg-secondary-bg)" }}>
+      <Card className="mb-4">
         <p className="text-xs mb-1" style={{ color: "var(--tg-hint)" }}>Sof foyda</p>
         <p className="text-2xl font-bold" style={{ color: summary.profit >= 0 ? "var(--tg-success)" : "var(--tg-destructive)" }}>
           {formatSom(summary.profit)}
         </p>
-      </div>
+      </Card>
 
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-sm font-semibold" style={{ color: "var(--tg-hint)" }}>Xarajatlar tarixi</h2>
-        <button className="btn btn-primary !w-auto !px-4 !py-2" onClick={() => setShowExpenseForm(true)}>+ Qo'shish</button>
+        <Button size="sm" onClick={() => setShowExpenseForm(true)}>
+          <Plus size={16} />
+          Qo'shish
+        </Button>
       </div>
 
       {expenses.length === 0 ? (
-        <EmptyState icon="💰" title="Xarajatlar yo'q" description="Hali hech qanday xarajat qo'shilmagan" />
+        <EmptyState title="Xarajatlar yo'q" description="Hali hech qanday xarajat qo'shilmagan" />
       ) : (
         <div className="space-y-2">
           {expenses.map((e) => (
-            <div key={e.id} className="card rounded-xl" style={{ background: "var(--tg-secondary-bg)" }}>
+            <Card key={e.id} className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">{e.description}</p>
                 <p className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatDate(e.createdAt)}</p>
               </div>
               <p className="text-sm font-semibold" style={{ color: "var(--tg-destructive)" }}>-{formatSom(e.amount)}</p>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      {showExpenseForm && (
-        <div className="modal-overlay" onClick={() => setShowExpenseForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-4">Xarajat qo'shish</h2>
-            <div className="space-y-3">
-              <input className="input-field" placeholder="Tavsif" value={desc} onChange={(e) => setDesc(e.target.value)} />
-              <input className="input-field" placeholder="Summa (so'm)" type="number" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} />
-              <div className="flex gap-2">
-                <button className="btn btn-primary flex-1" disabled={saving || !desc || amount <= 0} onClick={handleAddExpense}>
-                  {saving ? "Saqlanmoqda..." : "Saqlash"}
-                </button>
-                <button className="btn btn-outline flex-1" onClick={() => setShowExpenseForm(false)}>Bekor qilish</button>
-              </div>
-            </div>
+      <Modal open={showExpenseForm} onClose={() => setShowExpenseForm(false)} title="Xarajat qo'shish">
+        <div className="space-y-3">
+          <Input placeholder="Tavsif" value={desc} onChange={(e) => setDesc(e.target.value)} />
+          <Input placeholder="Summa (so'm)" type="number" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} />
+          <div className="flex gap-2">
+            <Button className="flex-1" loading={saving} disabled={!desc || amount <= 0} onClick={handleAddExpense}>
+              Saqlash
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setShowExpenseForm(false)}>
+              Bekor qilish
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

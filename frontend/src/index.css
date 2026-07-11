@@ -26,6 +26,16 @@
   }
 }
 
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer components {
   .page {
     @apply flex flex-col h-full;
@@ -51,86 +61,23 @@
     font-weight: 600;
   }
 
-  .card {
-    @apply flex items-center justify-between px-4 py-3;
-    border-bottom: 1px solid var(--tg-hint);
-    border-color: color-mix(in srgb, var(--tg-hint) 20%, transparent);
-  }
-
-  .badge {
-    @apply inline-flex text-xs font-medium px-2 py-0.5 rounded-full;
-  }
-
-  .badge-green {
-    background: color-mix(in srgb, var(--tg-success) 15%, transparent);
-    color: var(--tg-success);
-  }
-
-  .badge-yellow {
-    background: color-mix(in srgb, var(--tg-warning) 15%, transparent);
-    color: var(--tg-warning);
-  }
-
-  .badge-red {
-    background: color-mix(in srgb, var(--tg-destructive) 15%, transparent);
-    color: var(--tg-destructive);
-  }
-
-  .badge-blue {
-    background: color-mix(in srgb, var(--tg-button) 15%, transparent);
-    color: var(--tg-button);
-  }
-
-  .btn {
-    @apply w-full py-3 px-4 rounded-xl text-center font-medium text-sm border-none cursor-pointer;
-  }
-
-  .btn-primary {
-    background: var(--tg-button);
-    color: var(--tg-button-text);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .btn-outline {
-    background: transparent;
-    border: 1px solid var(--tg-button);
-    color: var(--tg-button);
-  }
-
   .empty-state {
     @apply flex flex-col items-center justify-center py-20 text-sm;
     color: var(--tg-hint);
   }
+}
 
-  .modal-overlay {
-    @apply fixed inset-0 z-50 flex items-end;
-    background: rgba(0,0,0,0.5);
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
   }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
-  .modal-content {
-    @apply w-full rounded-t-2xl p-5 max-h-[80vh] overflow-y-auto;
-    background: var(--tg-bg);
-  }
-
-  .input-field {
-    @apply w-full px-4 py-3 rounded-xl text-sm outline-none;
-    background: var(--tg-secondary-bg);
-    color: var(--tg-text);
-    border: 1px solid transparent;
-  }
-
-  .input-field:focus {
-    border-color: var(--tg-button);
-  }
-
-  .select-btn {
-    @apply w-full px-4 py-3 rounded-xl text-sm text-left flex items-center justify-between;
-    background: var(--tg-secondary-bg);
-    color: var(--tg-text);
-    border: 1px solid transparent;
-  }
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
 }

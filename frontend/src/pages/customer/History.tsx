@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Order } from "@grocery/shared";
 import { getMyOrders } from "../../services/orders";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
 import { formatSom, formatDate, statusLabel, statusBadgeClass } from "../../utils/format";
 
 export function History() {
@@ -32,7 +35,7 @@ export function History() {
   const completed = orders.filter((o) => o.status === "yetkazildi" || o.status === "bekor_qilindi");
 
   if (orders.length === 0) {
-    return <EmptyState icon="📜" title="Buyurtmalar yo'q" description="Hali hech qanday buyurtma bermagansiz" />;
+    return <EmptyState title="Buyurtmalar yo'q" description="Hali hech qanday buyurtma bermagansiz" />;
   }
 
   return (
@@ -63,13 +66,16 @@ function OrderCard({ order }: { order: Order }) {
   const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: "var(--tg-secondary-bg)" }} onClick={() => setExpanded(!expanded)}>
+    <Card className="cursor-pointer" onClick={() => setExpanded(!expanded)}>
       <div className="flex items-center justify-between mb-2">
-        <div>
+        <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">#{order.id}</span>
-          <span className="text-xs ml-2" style={{ color: "var(--tg-hint)" }}>{formatDate(order.createdAt)}</span>
+          <span className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatDate(order.createdAt)}</span>
         </div>
-        <span className={`badge ${statusBadgeClass(order.status)}`}>{statusLabel(order.status)}</span>
+        <div className="flex items-center gap-2">
+          <Badge variant={statusBadgeClass(order.status) as any}>{statusLabel(order.status)}</Badge>
+          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </div>
       </div>
       <div className="flex justify-between text-sm">
         <span style={{ color: "var(--tg-hint)" }}>{items.length} ta mahsulot</span>
@@ -92,6 +98,6 @@ function OrderCard({ order }: { order: Order }) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

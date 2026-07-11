@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import type { Order } from "@grocery/shared";
 import { getAllOrders, updateOrderStatus } from "../../services/orders";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Modal } from "../../components/ui/modal";
 import { formatSom, formatDate, statusLabel, statusBadgeClass } from "../../utils/format";
 
 export function AdminOrders() {
@@ -50,7 +55,7 @@ export function AdminOrders() {
   const sorted = [...orders].sort((a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status));
 
   if (orders.length === 0) {
-    return <EmptyState icon="📋" title="Buyurtmalar yo'q" description="Hali hech qanday buyurtma kelmagan" />;
+    return <EmptyState title="Buyurtmalar yo'q" description="Hali hech qanday buyurtma kelmagan" />;
   }
 
   return (
@@ -58,28 +63,26 @@ export function AdminOrders() {
       <p className="text-sm mb-3" style={{ color: "var(--tg-hint)" }}>{orders.length} ta buyurtma</p>
       <div className="space-y-2">
         {sorted.map((o) => (
-          <div
+          <Card
             key={o.id}
-            className="rounded-2xl p-4 cursor-pointer"
-            style={{ background: "var(--tg-secondary-bg)" }}
+            className="cursor-pointer"
             onClick={() => setSelected(o)}
           >
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-semibold">#{o.id}</span>
-              <span className={`badge ${statusBadgeClass(o.status)}`}>{statusLabel(o.status)}</span>
+              <Badge variant={statusBadgeClass(o.status) as any}>{statusLabel(o.status)}</Badge>
             </div>
             <div className="flex justify-between text-sm">
               <span style={{ color: "var(--tg-hint)" }}>{formatDate(o.createdAt)}</span>
               <span className="font-semibold">{formatSom(o.total)}</span>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
-      {selected && (
-        <div className="modal-overlay" onClick={() => !updating && setSelected(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-1">Buyurtma #{selected.id}</h2>
+      <Modal open={!!selected} onClose={() => !updating && setSelected(null)} title={`Buyurtma #${selected?.id}`}>
+        {selected && (
+          <div>
             <p className="text-sm mb-4" style={{ color: "var(--tg-hint)" }}>{formatDate(selected.createdAt)}</p>
 
             <div className="space-y-2 mb-4">
@@ -99,32 +102,33 @@ export function AdminOrders() {
             </div>
 
             <div className="text-sm mb-4 space-y-1" style={{ color: "var(--tg-hint)" }}>
-              <p>📍 Manzil: {selected.deliveryLocation || "Ko'rsatilmagan"}</p>
-              <p>💳 To'lov: {selected.paymentMethod}</p>
-              {selected.cancelReason && <p className="text-red-500">❌ Sabab: {selected.cancelReason}</p>}
+              <p>Manzil: {selected.deliveryLocation || "Ko'rsatilmagan"}</p>
+              <p>To'lov: {selected.paymentMethod}</p>
+              {selected.cancelReason && <p className="text-red-500">Sabab: {selected.cancelReason}</p>}
             </div>
 
             {selected.status === "yangi" && (
-              <button className="btn btn-primary mb-2" disabled={updating} onClick={() => handleStatus(selected.id, "tayyorlanmoqda")}>
-                ✅ Tayyorlanmoqda
-              </button>
+              <Button className="w-full mb-2" loading={updating} onClick={() => handleStatus(selected.id, "tayyorlanmoqda")}>
+                Tayyorlanmoqda
+              </Button>
             )}
             {selected.status === "tayyorlanmoqda" && (
               <>
-                <button className="btn btn-primary mb-2" disabled={updating} onClick={() => handleStatus(selected.id, "yetkazildi")}>
-                  ✅ Yetkazildi
-                </button>
-                <button className="btn btn-outline" disabled={updating} onClick={() => handleStatus(selected.id, "bekor_qilindi")}>
-                  ❌ Bekor qilish
-                </button>
+                <Button className="w-full mb-2" loading={updating} onClick={() => handleStatus(selected.id, "yetkazildi")}>
+                  Yetkazildi
+                </Button>
+                <Button variant="outline" className="w-full" loading={updating} onClick={() => handleStatus(selected.id, "bekor_qilindi")}>
+                  <X size={16} />
+                  Bekor qilish
+                </Button>
               </>
             )}
-            <button className="btn btn-outline mt-2" onClick={() => setSelected(null)}>
+            <Button variant="outline" className="w-full mt-2" onClick={() => setSelected(null)}>
               Yopish
-            </button>
+            </Button>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

@@ -1,7 +1,14 @@
-export function LoadingState() {
+import { Spinner } from "../ui/spinner";
+
+interface LoadingStateProps {
+  text?: string;
+}
+
+export function LoadingState({ text }: LoadingStateProps) {
   return (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: "var(--tg-button)", borderTopColor: "transparent" }} />
+    <div className="flex flex-col items-center justify-center py-20 gap-2">
+      <Spinner />
+      {text && <p className="text-sm" style={{ color: "var(--tg-hint)" }}>{text}</p>}
     </div>
   );
 }

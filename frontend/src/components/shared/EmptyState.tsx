@@ -1,15 +1,17 @@
+import { PackageOpen, type LucideIcon } from "lucide-react";
+
 interface EmptyStateProps {
-  icon?: string;
+  icon?: LucideIcon;
   title: string;
   description?: string;
 }
 
-export function EmptyState({ icon = "📭", title, description }: EmptyStateProps) {
+export function EmptyState({ icon: Icon = PackageOpen, title, description }: EmptyStateProps) {
   return (
     <div className="empty-state">
-      <span className="text-4xl mb-3">{icon}</span>
+      {Icon && <Icon size={40} strokeWidth={1.5} className="mb-3" style={{ color: "var(--tg-hint)" }} />}
       <p className="font-medium mb-1">{title}</p>
-      {description && <p style={{ color: "var(--tg-hint)" }}>{description}</p>}
+      {description && <p className="text-sm" style={{ color: "var(--tg-hint)" }}>{description}</p>}
     </div>
   );
 }

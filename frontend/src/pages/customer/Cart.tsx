@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { Product } from "@grocery/shared";
 import { useCartStore } from "../../store/cart";
 import { getProducts } from "../../services/products";
 import { createOrder } from "../../services/orders";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { EmptyState } from "../../components/shared/EmptyState";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Modal } from "../../components/ui/modal";
 import { QuantityInput } from "../../components/shared/QuantityInput";
 import { formatSom } from "../../utils/format";
 
@@ -59,12 +64,12 @@ export function Cart() {
   return (
     <div>
       {cartProducts.length === 0 ? (
-        <EmptyState icon="🛒" title="Savatcha bo'sh" description="Mahsulot qo'shish uchun do'konga o'ting" />
+        <EmptyState title="Savatcha bo'sh" description="Mahsulot qo'shish uchun do'konga o'ting" />
       ) : (
         <>
           <div className="space-y-1">
             {cartProducts.map((cp) => (
-              <div key={cp.id} className="card rounded-xl" style={{ background: "var(--tg-secondary-bg)" }}>
+              <Card key={cp.id} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl" style={{ background: "color-mix(in srgb, var(--tg-button) 8%, transparent)" }}>
                     🥦
@@ -80,18 +85,18 @@ export function Cart() {
                     else fetch();
                   }} />
                   <button
-                    className="text-lg border-none bg-transparent cursor-pointer"
+                    className="border-none bg-transparent cursor-pointer p-1"
                     style={{ color: "var(--tg-destructive)" }}
                     onClick={() => remove(cp.id)}
                   >
-                    🗑
+                    <Trash2 size={18} />
                   </button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
-          <div className="mt-4 p-4 rounded-2xl" style={{ background: "var(--tg-secondary-bg)" }}>
+          <Card className="mt-4">
             <div className="flex justify-between text-sm mb-2">
               <span style={{ color: "var(--tg-hint)" }}>Mahsulotlar</span>
               <span>{formatSom(subtotal)}</span>
@@ -104,72 +109,57 @@ export function Cart() {
               <span>Jami</span>
               <span>{formatSom(total)}</span>
             </div>
-          </div>
+          </Card>
 
-          <button className="btn btn-primary mt-4" onClick={() => setShowCheckout(true)}>
+          <Button className="mt-4 w-full" onClick={() => setShowCheckout(true)}>
             Buyurtma berish
-          </button>
+          </Button>
         </>
       )}
 
-      {showCheckout && (
-        <div className="modal-overlay" onClick={() => !submitting && setShowCheckout(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-4">Buyurtma ma'lumotlari</h2>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium mb-1 block" style={{ color: "var(--tg-hint)" }}>To'lov usuli</label>
-                <div className="flex gap-2">
-                  <button
-                    className={`flex-1 py-3 rounded-xl text-sm font-medium border-none cursor-pointer ${paymentMethod === "naqd" ? "" : "opacity-50"}`}
-                    style={{
-                      background: paymentMethod === "naqd" ? "var(--tg-button)" : "var(--tg-secondary-bg)",
-                      color: paymentMethod === "naqd" ? "var(--tg-button-text)" : "var(--tg-text)",
-                    }}
-                    onClick={() => setPaymentMethod("naqd")}
-                  >
-                    💵 Naqd
-                  </button>
-                  <button
-                    className={`flex-1 py-3 rounded-xl text-sm font-medium border-none cursor-pointer ${paymentMethod === "online" ? "" : "opacity-50"}`}
-                    style={{
-                      background: paymentMethod === "online" ? "var(--tg-button)" : "var(--tg-secondary-bg)",
-                      color: paymentMethod === "online" ? "var(--tg-button-text)" : "var(--tg-text)",
-                    }}
-                    onClick={() => setPaymentMethod("online")}
-                  >
-                    📱 Online
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium mb-1 block" style={{ color: "var(--tg-hint)" }}>Yetkazib berish manzili</label>
-                <input
-                  className="input-field"
-                  placeholder="Manzilni kiriting..."
-                  value={deliveryLocation}
-                  onChange={(e) => setDeliveryLocation(e.target.value)}
-                />
-              </div>
-
-              {error && (
-                <div className="p-3 rounded-xl text-sm text-red-600" style={{ background: "color-mix(in srgb, var(--tg-destructive) 10%, transparent)" }}>
-                  {error}
-                </div>
-              )}
-
-              <button className="btn btn-primary" disabled={submitting || !deliveryLocation.trim()} onClick={handleCheckout}>
-                {submitting ? "Yuborilmoqda..." : `Buyurtma qilish — ${formatSom(total)}`}
-              </button>
-              <button className="btn btn-outline mt-2" onClick={() => setShowCheckout(false)} disabled={submitting}>
-                Bekor qilish
-              </button>
+      <Modal open={showCheckout} onClose={() => !submitting && setShowCheckout(false)} title="Buyurtma ma'lumotlari">
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: "var(--tg-hint)" }}>To'lov usuli</p>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                variant={paymentMethod === "naqd" ? "primary" : "outline"}
+                onClick={() => setPaymentMethod("naqd")}
+              >
+                Naqd
+              </Button>
+              <Button
+                className="flex-1"
+                variant={paymentMethod === "online" ? "primary" : "outline"}
+                onClick={() => setPaymentMethod("online")}
+              >
+                Online
+              </Button>
             </div>
           </div>
+
+          <Input
+            label="Yetkazib berish manzili"
+            placeholder="Manzilni kiriting..."
+            value={deliveryLocation}
+            onChange={(e) => setDeliveryLocation(e.target.value)}
+          />
+
+          {error && (
+            <div className="p-3 rounded-xl text-sm text-red-600" style={{ background: "color-mix(in srgb, var(--tg-destructive) 10%, transparent)" }}>
+              {error}
+            </div>
+          )}
+
+          <Button className="w-full" loading={submitting} disabled={!deliveryLocation.trim()} onClick={handleCheckout}>
+            Buyurtma qilish — {formatSom(total)}
+          </Button>
+          <Button variant="outline" className="w-full mt-2" onClick={() => setShowCheckout(false)} disabled={submitting}>
+            Bekor qilish
+          </Button>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
