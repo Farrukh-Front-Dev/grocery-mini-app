@@ -10,9 +10,13 @@
   },
   "dependencies": {
     "@grocery/shared": "*",
+    "@tailwindcss/vite": "^4.3.2",
+    "@tanstack/react-query": "^5.101.2",
     "@twa-dev/sdk": "^8.0.2",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "tailwindcss": "^4.3.2",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

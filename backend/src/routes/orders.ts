@@ -3,6 +3,7 @@ import { db, schema } from "../db";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { authMiddleware, adminMiddleware } from "../middleware/auth";
+import { notifyNewOrder, notifyStatusChange } from "../bot";
 import type { OrderStatus } from "@grocery/shared";
 
 const router = Router();
@@ -106,6 +107,8 @@ router.post("/", authMiddleware, (req, res) => {
   }
 
   res.json({ ...order, items: JSON.parse(order.items) });
+
+  notifyNewOrder(order);
 });
 
 const statusSchema = z.object({
@@ -132,6 +135,11 @@ router.patch("/:id/status", authMiddleware, adminMiddleware, (req, res) => {
     .run();
 
   res.json({ ok: true });
+
+  const order = db.select().from(schema.orders).where(eq(schema.orders.id, Number(req.params.id))).get();
+  if (order) {
+    notifyStatusChange(order.id, status as OrderStatus, order.userId, cancelReason);
+  }
 });
 
 export default router;
