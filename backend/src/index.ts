@@ -11,6 +11,7 @@ import ordersRouter from "./routes/orders";
 import cartRouter from "./routes/cart";
 import expensesRouter from "./routes/expenses";
 import financeRouter from "./routes/finance";
+import authRouter from "./routes/auth";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(requestLogger);
 
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 
+app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/cart", cartRouter);

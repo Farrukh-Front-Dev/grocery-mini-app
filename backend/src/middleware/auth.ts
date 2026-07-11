@@ -54,9 +54,19 @@ declare global {
   }
 }
 
+export const webTokens = new Map<string, number>();
+
+function decodeToken(token: string): number | null {
+  for (const [t, uid] of webTokens) {
+    if (t === token) return uid;
+  }
+  return null;
+}
+
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
 
+  // Telegram WebApp auth
   if (auth?.startsWith("tma ")) {
     const user = validateInitData(auth.slice(4));
     if (!user) {
@@ -71,6 +81,27 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
+  // Web app token auth
+  if (auth?.startsWith("Bearer ")) {
+    const token = auth.slice(7);
+    const userId = decodeToken(token);
+    if (!userId) {
+      res.status(401).json({ error: "Invalid token" });
+      return;
+    }
+    const dbUser = db.select().from(schema.users).where(eq(schema.users.id, userId)).get();
+    if (!dbUser) {
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
+    req.userId = dbUser.id;
+    req.isAdmin = dbUser.isAdmin;
+    req.telegramUser = { id: dbUser.id, first_name: dbUser.name };
+    next();
+    return;
+  }
+
+  // Dev mode fallback
   if (config.isDev) {
     req.telegramUser = { id: DEV_USER_ID, first_name: "Dev" };
     const dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, DEV_USER_ID)).get();

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTelegram } from "./hooks/useTelegram";
+import { useAuthStore } from "./store/auth";
 import { Header } from "./components/layout/Header";
 import { BottomNav } from "./components/layout/BottomNav";
 import { Spinner } from "./components/ui/spinner";
+import { Login } from "./pages/auth/Login";
+import { Register } from "./pages/auth/Register";
 import { Products } from "./pages/customer/Products";
 import { Cart } from "./pages/customer/Cart";
 import { History } from "./pages/customer/History";
@@ -28,8 +31,10 @@ const adminTabs = [
 ];
 
 export default function App() {
+  const { user, token } = useAuthStore();
   const [page, setPage] = useState<Page>("products");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authPage, setAuthPage] = useState<"login" | "register">("login");
   const [loading, setLoading] = useState(true);
   const { ready, isTelegram } = useTelegram();
   const cartCount = useCartStore((s) => s.totalQuantity());
@@ -38,12 +43,36 @@ export default function App() {
   useEffect(() => {
     ready();
     const path = window.location.pathname;
-    setIsAdmin(path.startsWith("/admin"));
-    if (path === "/admin") setPage("admin-products");
-    fetchCart();
+    if (path.startsWith("/admin")) {
+      setIsAdmin(true);
+      if (page === "products") setPage("admin-products");
+    }
+    if (token) {
+      fetchCart();
+    }
     setLoading(false);
-  }, []);
+  }, [token]);
 
+  useEffect(() => {
+    if (user) {
+      setIsAdmin(user.isAdmin);
+    }
+  }, [user]);
+
+  // Not authenticated — show login/register
+  if (!loading && !user && !isTelegram) {
+    return (
+      <div className="page">
+        {authPage === "login" ? (
+          <Login onSwitch={() => setAuthPage("register")} />
+        ) : (
+          <Register onSwitch={() => setAuthPage("login")} />
+        )}
+      </div>
+    );
+  }
+
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -51,6 +80,9 @@ export default function App() {
       </div>
     );
   }
+
+  // Determine default page based on role
+  const currentPage = isAdmin && page === "products" ? "admin-products" : page;
 
   const pages: Record<Page, { title: string; component: React.ReactNode }> = {
     products: { title: "Do'kon", component: <Products /> },
@@ -62,19 +94,25 @@ export default function App() {
     "admin-history": { title: "Tarix", component: <AdminHistory /> },
   };
 
-  const current = pages[page];
   const tabs = isAdmin ? adminTabs : customerTabs;
 
   return (
     <div className="page">
       {!isTelegram && (
-        <div className="text-center text-xs py-1.5 font-medium" style={{ background: "color-mix(in srgb, var(--tg-warning) 15%, transparent)", color: "var(--tg-warning)" }}>
-          Development mode — Telegram'da ochilsa to'liq ishlaydi
+        <div className="flex items-center justify-between px-4 py-1.5 text-xs" style={{ background: "color-mix(in srgb, var(--tg-warning) 12%, transparent)" }}>
+          <span style={{ color: "var(--tg-warning)" }}>Test mode</span>
+          <button
+            className="border-none bg-transparent cursor-pointer font-medium"
+            style={{ color: "var(--tg-destructive)" }}
+            onClick={() => useAuthStore.getState().logout()}
+          >
+            Chiqish
+          </button>
         </div>
       )}
-      <Header title={current.title} />
-      <div className="content">{current.component}</div>
-      <BottomNav tabs={tabs} active={page} onChange={(id) => setPage(id as Page)} badge={cartCount} />
+      <Header title={pages[currentPage]?.title || "Do'kon"} />
+      <div className="content">{pages[currentPage]?.component}</div>
+      <BottomNav tabs={tabs} active={currentPage} onChange={(id) => setPage(id as Page)} badge={cartCount} />
     </div>
   );
 }

@@ -2,9 +2,11 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: integer().primaryKey({ autoIncrement: true }),
-  telegramId: integer("telegram_id").notNull().unique(),
+  telegramId: integer("telegram_id").unique(),
   name: text().notNull().default(""),
   phone: text(),
+  username: text().unique(),
+  password: text(),
   isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull().default("datetime('now')"),
 });

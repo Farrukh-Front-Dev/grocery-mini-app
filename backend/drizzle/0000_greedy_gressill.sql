@@ -54,11 +54,14 @@ CREATE TABLE `products` (
 --> statement-breakpoint
 CREATE TABLE `users` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`telegram_id` integer NOT NULL,
+	`telegram_id` integer,
 	`name` text DEFAULT '' NOT NULL,
 	`phone` text,
+	`username` text,
+	`password` text,
 	`is_admin` integer DEFAULT false NOT NULL,
 	`created_at` text DEFAULT 'datetime(''now'')' NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `users_telegram_id_unique` ON `users` (`telegram_id`);
+CREATE UNIQUE INDEX `users_telegram_id_unique` ON `users` (`telegram_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `users_username_unique` ON `users` (`username`);
