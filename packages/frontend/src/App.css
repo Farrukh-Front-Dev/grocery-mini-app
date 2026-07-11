@@ -1,0 +1,16 @@
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+header { padding: 14px 16px; border-bottom: 1px solid var(--tg-theme-hint-color, #ddd); }
+header h1 { font-size: 18px; }
+main { flex: 1; padding: 12px 16px; overflow-y: auto; }
+.tabs { display: flex; border-top: 1px solid var(--tg-theme-hint-color, #ddd); background: var(--tg-theme-bg-color, #fff); }
+.tabs button { flex: 1; padding: 12px 6px; border: none; background: none; font-size: 12px; color: var(--tg-theme-hint-color, #888); cursor: pointer; }
+.tabs button.active { color: var(--tg-theme-button-color, #2481cc); font-weight: 600; }
+.card { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--tg-theme-hint-color, #eee); }
+.card h3 { font-size: 15px; margin-bottom: 2px; }
+.price { font-size: 14px; color: var(--tg-theme-text-color, #333); }
+.badge { font-size: 12px; margin-top: 4px; }
+.badge.error { color: #e74c3c; }
+.badge.warn { color: #f39c12; }
+.card button { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--tg-theme-button-color, #2481cc); color: #fff; font-size: 20px; cursor: pointer; flex-shrink: 0; }
+.card button:disabled { background: #ccc; cursor: not-allowed; }
+.empty { text-align: center; color: var(--tg-theme-hint-color, #888); padding: 60px 0; font-size: 14px; }

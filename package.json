@@ -1,0 +1,16 @@
+{
+  "name": "telegram-grocery",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/backend & npm run dev --workspace=packages/frontend",
+    "dev:backend": "npm run dev -w packages/backend",
+    "dev:frontend": "npm run dev -w packages/frontend",
+    "build": "npm run build -w packages/shared && npm run build -w packages/backend && npm run build -w packages/frontend",
+    "db:generate": "npm run db:generate -w packages/backend",
+    "db:migrate": "npm run db:migrate -w packages/backend"
+  }
+}
