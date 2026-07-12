@@ -5,6 +5,7 @@ import { z } from "zod";
 import { authMiddleware, adminMiddleware } from "../middleware/auth";
 import { notifyNewOrder, notifyStatusChange } from "../bot";
 import type { OrderStatus, OrderItem } from "@grocery/shared";
+import { config } from "../config";
 
 const router = Router();
 
@@ -82,7 +83,7 @@ router.post("/", authMiddleware, (req, res) => {
     productCache.set(item.productId, product);
   }
 
-  const deliveryFee = 0;
+  const deliveryFee = config.DELIVERY_FEE;
   const total = subtotal + deliveryFee;
 
   const createOrder = rawDb.transaction(() => {

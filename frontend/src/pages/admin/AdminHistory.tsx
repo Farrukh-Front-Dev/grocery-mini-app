@@ -71,7 +71,7 @@ export function AdminHistory() {
             <Card key={`order-${item.id}`}>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-semibold">Buyurtma #{item.id}</span>
-                <Badge variant={statusBadgeClass(item.status) as any}>{statusLabel(item.status)}</Badge>
+                <Badge variant={statusBadgeClass(item.status)}>{statusLabel(item.status)}</Badge>
               </div>
               <div className="flex justify-between text-sm">
                 <span style={{ color: "var(--tg-hint)" }}>{formatDate(item.createdAt)}</span>

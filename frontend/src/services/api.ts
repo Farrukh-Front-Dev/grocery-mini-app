@@ -55,6 +55,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("grocery-auth");
+      window.location.reload();
+    }
     const errBody = await res.json().catch(() => ({ error: "Request failed" }));
     throw new Error(errBody.error || `HTTP ${res.status}`);
   }

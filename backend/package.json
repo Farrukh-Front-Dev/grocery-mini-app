@@ -14,7 +14,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@grammyjs/web-app": "^1.1.0",
     "@grocery/shared": "*",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^11.7.0",

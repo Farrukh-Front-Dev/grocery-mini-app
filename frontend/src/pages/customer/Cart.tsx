@@ -13,6 +13,7 @@ import { Modal } from "../../components/ui/modal";
 import { QuantityInput } from "../../components/shared/QuantityInput";
 import { formatSom } from "../../utils/format";
 import { usePolling } from "../../hooks/usePolling";
+import { getConfig } from "../../services/config";
 
 interface CartProduct extends Product {
   cartQty: number;
@@ -21,6 +22,7 @@ interface CartProduct extends Product {
 export function Cart() {
   const { items, fetch, update, remove, clear, loading } = useCartStore();
   const [products, setProducts] = useState<Product[]>([]);
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"naqd" | "online">("naqd");
   const [deliveryLocation, setDeliveryLocation] = useState("");
@@ -28,6 +30,7 @@ export function Cart() {
   const [error, setError] = useState("");
 
   const loadProducts = useCallback(() => {
+    getConfig().then(c => setDeliveryFee(c.deliveryFee)).catch(() => {});
     getProducts().then(setProducts).catch(() => {});
   }, []);
 
@@ -43,7 +46,6 @@ export function Cart() {
     .filter((cp): cp is CartProduct => cp !== null);
 
   const subtotal = cartProducts.reduce((sum, cp) => sum + cp.price * cp.cartQty, 0);
-  const deliveryFee = 0;
   const total = subtotal + deliveryFee;
 
   const handleCheckout = async () => {
@@ -188,7 +190,7 @@ export function Cart() {
             </div>
           )}
 
-          <Button className="w-full" loading={submitting} disabled={!deliveryLocation.trim()} onClick={handleCheckout}>
+          <Button className="w-full" loading={submitting} disabled={paymentMethod === "online" && !deliveryLocation.trim()} onClick={handleCheckout}>
             Buyurtma qilish — {formatSom(total)}
           </Button>
           <Button variant="outline" className="w-full mt-2" onClick={() => setShowCheckout(false)} disabled={submitting}>

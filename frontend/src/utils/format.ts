@@ -17,12 +17,12 @@ export function statusLabel(status: string): string {
   return map[status] || status;
 }
 
-export function statusBadgeClass(status: string): string {
-  const map: Record<string, string> = {
-    yangi: "badge-blue",
-    tayyorlanmoqda: "badge-yellow",
-    yetkazildi: "badge-green",
-    bekor_qilindi: "badge-red",
+export function statusBadgeClass(status: string): "blue" | "yellow" | "green" | "red" | "gray" {
+  const map: Record<string, "blue" | "yellow" | "green" | "red" | "gray"> = {
+    yangi: "blue",
+    tayyorlanmoqda: "yellow",
+    yetkazildi: "green",
+    bekor_qilindi: "red",
   };
-  return map[status] || "";
+  return map[status] || "gray";
 }

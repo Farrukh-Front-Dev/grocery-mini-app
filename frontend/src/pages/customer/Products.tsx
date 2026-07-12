@@ -45,6 +45,18 @@ export function Products() {
     <div>
       {categories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto py-3 -mx-4 px-4 mb-2 scrollbar-none">
+          <button
+            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium border-none cursor-pointer whitespace-nowrap transition-all ${
+              selectedCat === null ? "" : "opacity-60"
+            }`}
+            style={{
+              background: selectedCat === null ? "var(--tg-button)" : "var(--tg-secondary-bg)",
+              color: selectedCat === null ? "var(--tg-button-text)" : "var(--tg-text)",
+            }}
+            onClick={() => setSelectedCat(null)}
+          >
+            Hammasi
+          </button>
           {categories.map((cat) => (
             <button
               key={cat.id}

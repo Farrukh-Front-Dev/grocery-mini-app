@@ -80,9 +80,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       return;
     }
     req.telegramUser = user;
-    const dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, user.id)).get();
-    req.userId = dbUser?.id;
-    req.isAdmin = config.ADMIN_IDS.includes(user.id);
+    let dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, user.id)).get();
+    if (!dbUser) {
+      db.insert(schema.users).values({ telegramId: user.id, name: user.first_name || "", isAdmin: config.ADMIN_IDS.includes(user.id) }).run();
+      dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, user.id)).get()!;
+    }
+    req.userId = dbUser.id;
+    req.isAdmin = dbUser.isAdmin || config.ADMIN_IDS.includes(user.id);
     next();
     return;
   }

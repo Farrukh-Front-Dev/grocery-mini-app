@@ -1,8 +1,8 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
-import { db, schema } from "./db/index.js";
-import { config } from "./config.js";
+import { db, schema } from "./db/index";
+import { config } from "./config";
 
 const userId = config.isDev ? 1 : 0;
 

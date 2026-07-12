@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import type { Order } from "@grocery/shared";
+import type { Order, OrderItem } from "@grocery/shared";
 import { getMyOrders } from "../../services/orders";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
@@ -78,7 +78,7 @@ function OrderCard({ order }: { order: Order }) {
           <span className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatDate(order.createdAt)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={statusBadgeClass(order.status) as any}>{statusLabel(order.status)}</Badge>
+          <Badge variant={statusBadgeClass(order.status)}>{statusLabel(order.status)}</Badge>
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </div>
@@ -91,7 +91,7 @@ function OrderCard({ order }: { order: Order }) {
       )}
       {expanded && (
         <div className="mt-3 pt-3 border-t space-y-1" style={{ borderColor: "color-mix(in srgb, var(--tg-hint) 20%, transparent)" }}>
-          {items.map((item: any, i: number) => (
+          {items.map((item: OrderItem, i: number) => (
             <div key={i} className="flex justify-between text-sm">
               <span>{item.productId ? `#${item.productId}` : "Mahsulot"}</span>
               <span>{item.quantity} × {formatSom(item.priceAtOrder)}</span>

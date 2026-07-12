@@ -10,6 +10,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.string().default(path.join(__dirname, "..", "data", "grocery.db")),
   APP_URL: z.string().default("http://localhost:5173"),
+  DELIVERY_FEE: z.coerce.number().default(0),
   DEV_MODE: z.enum(["true", "false"]).default("true"),
 });
 

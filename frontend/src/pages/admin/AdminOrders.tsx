@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { X } from "lucide-react";
-import type { Order } from "@grocery/shared";
+import type { Order, OrderItem } from "@grocery/shared";
 import { getAllOrders, updateOrderStatus } from "../../services/orders";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
@@ -11,13 +11,6 @@ import { Badge } from "../../components/ui/badge";
 import { Modal } from "../../components/ui/modal";
 import { formatSom, formatDate, statusLabel, statusBadgeClass } from "../../utils/format";
 import { usePolling } from "../../hooks/usePolling";
-
-const STATUS_COLORS: Record<string, string> = {
-  yangi: "badge-blue",
-  tayyorlanmoqda: "badge-yellow",
-  yetkazildi: "badge-green",
-  bekor_qilindi: "badge-red",
-};
 
 export function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -84,7 +77,7 @@ export function AdminOrders() {
           >
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-semibold">#{o.id}</span>
-              <Badge variant={(STATUS_COLORS[o.status] || statusBadgeClass(o.status)) as any}>{statusLabel(o.status)}</Badge>
+              <Badge variant={statusBadgeClass(o.status)}>{statusLabel(o.status)}</Badge>
             </div>
             <div className="flex justify-between text-sm">
               <span style={{ color: "var(--tg-hint)" }}>{formatDate(o.createdAt)}</span>
@@ -109,7 +102,7 @@ export function AdminOrders() {
             <div className="space-y-2 mb-4">
               {(() => {
                 const items = typeof selected.items === "string" ? JSON.parse(selected.items) : selected.items;
-                return items.map((item: { productId: number; quantity: number; priceAtOrder: number }, i: number) => (
+                return items.map((item: OrderItem, i: number) => (
                   <div key={i} className="flex justify-between text-sm py-1">
                     <span>#{item.productId} × {item.quantity}</span>
                     <span>{formatSom(item.priceAtOrder * item.quantity)}</span>

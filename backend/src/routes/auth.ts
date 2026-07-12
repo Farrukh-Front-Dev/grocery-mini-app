@@ -4,7 +4,7 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { db, schema } from "../db";
 import { eq } from "drizzle-orm";
-import { webTokens } from "../middleware/auth";
+import { webTokens, authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
@@ -114,6 +114,37 @@ router.post("/register", async (req: Request, res: Response) => {
     createdAt: new Date().toISOString(),
   }).run();
 
+  res.json({ ok: true });
+});
+
+router.get("/me", authMiddleware, (req, res) => {
+  const user = db
+    .select({ id: schema.users.id, name: schema.users.name, username: schema.users.username, phone: schema.users.phone, isAdmin: schema.users.isAdmin })
+    .from(schema.users)
+    .where(eq(schema.users.id, req.userId!))
+    .get();
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json(user);
+});
+
+const updateProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  phone: z.string().optional(),
+});
+
+router.patch("/me", authMiddleware, async (req, res) => {
+  const parsed = updateProfileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+  db.update(schema.users)
+    .set(parsed.data)
+    .where(eq(schema.users.id, req.userId!))
+    .run();
   res.json({ ok: true });
 });
 

@@ -30,6 +30,7 @@ app.use(requestLogger);
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 app.get("/api/health", (_, res) => res.json({ ok: true }));
+app.get("/api/config", (_, res) => res.json({ deliveryFee: config.DELIVERY_FEE }));
 
 app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
