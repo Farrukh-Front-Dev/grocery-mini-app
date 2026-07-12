@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { addToCart, getCart, removeFromCart, clearCart } from "../services/cart";
+import { addToCart, getCart, removeFromCart, clearCart, updateCart } from "../services/cart";
 
 interface CartItem {
   id: number;
@@ -12,6 +12,7 @@ interface CartState {
   loading: boolean;
   fetch: () => Promise<void>;
   add: (productId: number, quantity: number) => Promise<void>;
+  update: (productId: number, quantity: number) => Promise<void>;
   remove: (productId: number) => Promise<void>;
   clear: () => Promise<void>;
   totalQuantity: () => number;
@@ -32,6 +33,11 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   add: async (productId: number, quantity: number) => {
     await addToCart(productId, quantity);
+    await get().fetch();
+  },
+
+  update: async (productId: number, quantity: number) => {
+    await updateCart(productId, quantity);
     await get().fetch();
   },
 

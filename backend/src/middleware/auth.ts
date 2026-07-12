@@ -19,6 +19,12 @@ function validateInitData(initData: string): TelegramUser | null {
   const hash = params.get("hash");
   if (!hash) return null;
 
+  const authDate = params.get("auth_date");
+  if (authDate) {
+    const ageSec = Math.floor(Date.now() / 1000) - Number(authDate);
+    if (ageSec > 86400) return null; // reject initData older than 24h
+  }
+
   params.delete("hash");
   const dataCheckString = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
@@ -101,8 +107,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
-  // Dev mode fallback
-  if (config.isDev) {
+  // Dev mode fallback — only if explicitly enabled AND not in production
+  if (config.isDev && process.env.NODE_ENV !== "production") {
     req.telegramUser = { id: DEV_USER_ID, first_name: "Dev" };
     const dbUser = db.select().from(schema.users).where(eq(schema.users.telegramId, DEV_USER_ID)).get();
     req.userId = dbUser?.id ?? DEV_USER_ID;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import type { Expense } from "@grocery/shared";
 import { getFinanceSummary, getExpenses, createExpense } from "../../services/finance";
 import { LoadingState } from "../../components/shared/LoadingState";
 import { ErrorState } from "../../components/shared/ErrorState";
@@ -12,13 +13,14 @@ import { formatSom, formatDate } from "../../utils/format";
 
 export function AdminFinance() {
   const [summary, setSummary] = useState({ totalIncome: 0, totalExpenses: 0, profit: 0, orderCount: 0 });
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [desc, setDesc] = useState("");
   const [amount, setAmount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [expenseError, setExpenseError] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -27,8 +29,8 @@ export function AdminFinance() {
       const [sum, exps] = await Promise.all([getFinanceSummary(), getExpenses()]);
       setSummary(sum);
       setExpenses(exps);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
     } finally {
       setLoading(false);
     }
@@ -39,14 +41,15 @@ export function AdminFinance() {
   const handleAddExpense = async () => {
     if (!desc || amount <= 0) return;
     setSaving(true);
+    setExpenseError("");
     try {
       await createExpense({ description: desc, amount });
       setShowExpenseForm(false);
       setDesc("");
       setAmount(0);
       await load();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e: unknown) {
+      setExpenseError(e instanceof Error ? e.message : "Xatolik yuz berdi");
     } finally {
       setSaving(false);
     }

@@ -40,4 +40,22 @@ router.post("/", authMiddleware, adminMiddleware, (req, res) => {
   res.json(expense);
 });
 
+router.patch("/:id", authMiddleware, adminMiddleware, (req, res) => {
+  const parsed = expenseSchema.partial().safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Validation failed" });
+    return;
+  }
+  db.update(schema.expenses)
+    .set(parsed.data)
+    .where(eq(schema.expenses.id, Number(req.params.id)))
+    .run();
+  res.json({ ok: true });
+});
+
+router.delete("/:id", authMiddleware, adminMiddleware, (req, res) => {
+  db.delete(schema.expenses).where(eq(schema.expenses.id, Number(req.params.id))).run();
+  res.json({ ok: true });
+});
+
 export default router;

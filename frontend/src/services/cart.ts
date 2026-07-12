@@ -12,6 +12,10 @@ export function removeFromCart(productId: number) {
   return api.delete(`/cart/${productId}`);
 }
 
+export function updateCart(productId: number, quantity: number) {
+  return api.patch(`/cart/${productId}`, { quantity });
+}
+
 export function clearCart() {
   return api.delete("/cart");
 }

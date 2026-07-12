@@ -14,13 +14,14 @@ export function Register({ onSwitch }: RegisterProps) {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [registered, setRegistered] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await register(username, password, name);
+      await register(username, password, name, phone);
       setRegistered(true);
     } catch {}
   };
@@ -72,6 +73,13 @@ export function Register({ onSwitch }: RegisterProps) {
           onChange={(e) => setUsername(e.target.value)}
           autoCapitalize="none"
           autoComplete="username"
+        />
+
+        <Input
+          type="tel"
+          placeholder="Telefon raqam (ixtiyoriy)"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
         />
 
         <Input

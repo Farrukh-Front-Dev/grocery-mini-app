@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, request } from "./api";
 import type { Product, Category } from "@grocery/shared";
 
 export function getProducts() {
@@ -19,4 +19,18 @@ export function updateProduct(id: number, data: Partial<Product>) {
 
 export function deleteProduct(id: number) {
   return api.delete(`/products/${id}`);
+}
+
+export function createCategory(data: { name: string; icon: string }) {
+  return api.post<Category>("/categories", data);
+}
+
+export function uploadImage(file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+  return request<{ url: string }>("/upload", {
+    method: "POST",
+    headers: {},
+    body: formData,
+  });
 }

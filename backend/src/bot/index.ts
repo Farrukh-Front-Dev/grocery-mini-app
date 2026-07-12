@@ -8,6 +8,30 @@ import type { OrderStatus } from "@grocery/shared";
 export const bot = new Bot(config.BOT_TOKEN);
 bot.catch((err) => logger.warn({ err: err.message }, "Bot error"));
 
+bot.on("message:text", async (ctx) => {
+  const id = ctx.from?.id;
+  if (!id) return;
+
+  const user = db.select().from(schema.users).where(eq(schema.users.telegramId, id)).get();
+  if (!user) return;
+
+  if (config.ADMIN_IDS.includes(id)) return;
+
+  for (const adminId of config.ADMIN_IDS) {
+    try {
+      await bot.api.sendMessage(
+        adminId,
+        `💬 *Mijozdan xabar*\n\nIsm: ${user.name}\n@${ctx.from?.username || "username yo'q"}\n\n${ctx.message.text}`,
+        { parse_mode: "Markdown" }
+      );
+    } catch {
+      // skip failed delivery
+    }
+  }
+
+  await ctx.reply("Xabaringiz adminga yuborildi. Javobni kuting.");
+});
+
 bot.command("start", async (ctx) => {
   const id = ctx.from?.id;
   if (!id) return;
@@ -66,6 +90,7 @@ export async function notifyStatusChange(orderId: number, status: OrderStatus, u
   }
 
   try {
+    if (!user.telegramId) return;
     await bot.api.sendMessage(user.telegramId, message, {
       reply_markup: new InlineKeyboard().webApp("Do'konga kirish", config.APP_URL),
     });

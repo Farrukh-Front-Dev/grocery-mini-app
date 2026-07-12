@@ -88,8 +88,12 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (qty: number
 
   return (
     <Card className="flex flex-col p-3">
-      <div className="w-full aspect-square rounded-xl mb-2 flex items-center justify-center text-3xl" style={{ background: "color-mix(in srgb, var(--tg-button) 8%, transparent)" }}>
-        🥦
+      <div className="w-full aspect-square rounded-xl mb-2 flex items-center justify-center text-3xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--tg-button) 8%, transparent)" }}>
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+        ) : (
+          "🥦"
+        )}
       </div>
       <h3 className="text-sm font-medium mb-0.5">{product.name}</h3>
       <p className="text-sm font-semibold mb-1">{formatSom(product.price)}</p>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Order } from "@grocery/shared";
 import { getMyOrders } from "../../services/orders";
@@ -8,25 +8,30 @@ import { EmptyState } from "../../components/shared/EmptyState";
 import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { formatSom, formatDate, statusLabel, statusBadgeClass } from "../../utils/format";
+import { usePolling } from "../../hooks/usePolling";
 
 export function History() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = async () => {
-    setLoading(true);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  const load = useCallback(async () => {
+    if (initialLoad) setLoading(true);
     setError("");
     try {
       setOrders(await getMyOrders());
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
-  };
+  }, [initialLoad]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
+  usePolling(load, 8000);
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={load} />;

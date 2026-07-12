@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Trash2, MapPin } from "lucide-react";
 import type { Product } from "@grocery/shared";
 import { useCartStore } from "../../store/cart";
 import { getProducts } from "../../services/products";
@@ -12,14 +12,14 @@ import { Input } from "../../components/ui/input";
 import { Modal } from "../../components/ui/modal";
 import { QuantityInput } from "../../components/shared/QuantityInput";
 import { formatSom } from "../../utils/format";
+import { usePolling } from "../../hooks/usePolling";
 
 interface CartProduct extends Product {
   cartQty: number;
-  cartItemId: number;
 }
 
 export function Cart() {
-  const { items, fetch, remove, clear, loading } = useCartStore();
+  const { items, fetch, update, remove, clear, loading } = useCartStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"naqd" | "online">("naqd");
@@ -27,15 +27,20 @@ export function Cart() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { fetch(); getProducts().then(setProducts).catch(() => {}); }, []);
+  const loadProducts = useCallback(() => {
+    getProducts().then(setProducts).catch(() => {});
+  }, []);
+
+  useEffect(() => { fetch(); loadProducts(); }, [fetch, loadProducts]);
+  usePolling(loadProducts, 10000);
 
   const cartProducts: CartProduct[] = items
     .map((ci) => {
       const p = products.find((pr) => pr.id === ci.productId);
       if (!p) return null;
-      return { ...p, cartQty: ci.quantity, cartItemId: ci.id };
+      return { ...p, cartQty: ci.quantity };
     })
-    .filter((cp): cp is CartProduct => cp !== null) as CartProduct[];
+    .filter((cp): cp is CartProduct => cp !== null);
 
   const subtotal = cartProducts.reduce((sum, cp) => sum + cp.price * cp.cartQty, 0);
   const deliveryFee = 0;
@@ -52,10 +57,21 @@ export function Cart() {
       });
       await clear();
       setShowCheckout(false);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Xatolik yuz berdi");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const requestLocation = () => {
+    try {
+      const tg = (window as any).Telegram?.WebApp;
+      if (tg?.sendData) {
+        tg.sendData(JSON.stringify({ action: "request_location" }));
+      }
+    } catch {
+      // fallback to manual input
     }
   };
 
@@ -68,32 +84,40 @@ export function Cart() {
       ) : (
         <>
           <div className="space-y-1">
-            {cartProducts.map((cp) => (
-              <Card key={cp.id} className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl" style={{ background: "color-mix(in srgb, var(--tg-button) 8%, transparent)" }}>
-                    🥦
+            {cartProducts.map((cp) => {
+              const lowStock = cp.stockQty < 5 && cp.stockQty > 0;
+              return (
+                <Card key={cp.id} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--tg-button) 8%, transparent)" }}>
+                      {cp.image ? (
+                        <img src={cp.image} alt={cp.name} className="w-full h-full object-cover" />
+                      ) : (
+                        "🥦"
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{cp.name}</p>
+                      <p className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatSom(cp.price)} / {cp.unit}</p>
+                      {lowStock && <p className="text-xs text-amber-500">Faqat {cp.stockQty}{cp.unit} qoldi</p>}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{cp.name}</p>
-                    <p className="text-xs" style={{ color: "var(--tg-hint)" }}>{formatSom(cp.price)} / {cp.unit}</p>
+                  <div className="flex items-center gap-3">
+                    <QuantityInput value={cp.cartQty} step={cp.step} max={cp.stockQty + cp.cartQty} onChange={(v) => {
+                      if (v <= 0) remove(cp.id);
+                      else update(cp.id, v);
+                    }} />
+                    <button
+                      className="border-none bg-transparent cursor-pointer p-1"
+                      style={{ color: "var(--tg-destructive)" }}
+                      onClick={() => remove(cp.id)}
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <QuantityInput value={cp.cartQty} step={cp.step} max={cp.stockQty + cp.cartQty} onChange={(v) => {
-                    if (v <= 0) remove(cp.id);
-                    else fetch();
-                  }} />
-                  <button
-                    className="border-none bg-transparent cursor-pointer p-1"
-                    style={{ color: "var(--tg-destructive)" }}
-                    onClick={() => remove(cp.id)}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
 
           <Card className="mt-4">
@@ -139,12 +163,24 @@ export function Cart() {
             </div>
           </div>
 
-          <Input
-            label="Yetkazib berish manzili"
-            placeholder="Manzilni kiriting..."
-            value={deliveryLocation}
-            onChange={(e) => setDeliveryLocation(e.target.value)}
-          />
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Input
+                label="Yetkazib berish manzili"
+                placeholder="Manzilni kiriting..."
+                value={deliveryLocation}
+                onChange={(e) => setDeliveryLocation(e.target.value)}
+              />
+            </div>
+            <button
+              className="flex items-center gap-1 text-xs border-none bg-transparent cursor-pointer mt-1"
+              style={{ color: "var(--tg-button)" }}
+              onClick={requestLocation}
+            >
+              <MapPin size={14} />
+              Telegram lokatsiya jo'natish
+            </button>
+          </div>
 
           {error && (
             <div className="p-3 rounded-xl text-sm text-red-600" style={{ background: "color-mix(in srgb, var(--tg-destructive) 10%, transparent)" }}>

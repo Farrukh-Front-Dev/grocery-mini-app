@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { db, schema } from "../db";
-import { eq, desc } from "drizzle-orm";
+import { db, rawDb, schema } from "../db";
+import { eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { authMiddleware, adminMiddleware } from "../middleware/auth";
 import { notifyNewOrder, notifyStatusChange } from "../bot";
-import type { OrderStatus } from "@grocery/shared";
+import type { OrderStatus, OrderItem } from "@grocery/shared";
 
 const router = Router();
 
@@ -16,7 +16,6 @@ router.get("/", authMiddleware, (req, res) => {
     .orderBy(desc(schema.orders.createdAt))
     .all()
     .map((o) => ({ ...o, items: JSON.parse(o.items) }));
-
   res.json(orders);
 });
 
@@ -27,7 +26,6 @@ router.get("/all", authMiddleware, adminMiddleware, (_, res) => {
     .orderBy(desc(schema.orders.createdAt))
     .all()
     .map((o) => ({ ...o, items: JSON.parse(o.items) }));
-
   res.json(orders);
 });
 
@@ -49,17 +47,24 @@ router.post("/", authMiddleware, (req, res) => {
 
   const { items, deliveryLocation, paymentMethod } = parsed.data;
   let subtotal = 0;
-  const orderItems: { productId: number; quantity: number; priceAtOrder: number }[] = [];
+  const orderItems: OrderItem[] = [];
+
+  const productCache = new Map<number, { price: number; stockQty: number; name: string; step: number }>();
 
   for (const item of items) {
     const product = db
-      .select()
+      .select({ price: schema.products.price, stockQty: schema.products.stockQty, name: schema.products.name, step: schema.products.step, isActive: schema.products.isActive })
       .from(schema.products)
       .where(eq(schema.products.id, item.productId))
       .get();
 
     if (!product || !product.isActive) {
       res.status(400).json({ error: `Mahsulot topilmadi: ${item.productId}` });
+      return;
+    }
+
+    if (item.quantity % product.step !== 0 && item.quantity < product.step) {
+      res.status(400).json({ error: `${product.name} uchun minimal qadam ${product.step} ${product.step >= 1 ? "dona" : "kg"}` });
       return;
     }
 
@@ -71,43 +76,44 @@ router.post("/", authMiddleware, (req, res) => {
       return;
     }
 
-    const lineTotal = product.price * item.quantity;
+    const lineTotal = Math.round(product.price * item.quantity);
     subtotal += lineTotal;
     orderItems.push({ productId: item.productId, quantity: item.quantity, priceAtOrder: product.price });
+    productCache.set(item.productId, product);
   }
 
   const deliveryFee = 0;
   const total = subtotal + deliveryFee;
 
-  const order = db
-    .insert(schema.orders)
-    .values({
-      userId: req.userId!,
-      items: JSON.stringify(orderItems),
-      subtotal,
-      deliveryFee,
-      total,
-      paymentMethod,
-      deliveryLocation: deliveryLocation || null,
-      status: "yangi",
-    })
-    .returning()
-    .get();
+  const createOrder = rawDb.transaction(() => {
+    for (const item of items) {
+      const p = productCache.get(item.productId)!;
+      db.update(schema.products)
+        .set({ stockQty: sql`stock_qty - ${item.quantity}` })
+        .where(eq(schema.products.id, item.productId))
+        .run();
+    }
 
-  for (const item of items) {
-    const product = db
-      .select()
-      .from(schema.products)
-      .where(eq(schema.products.id, item.productId))
-      .get()!;
-    db.update(schema.products)
-      .set({ stockQty: product.stockQty - item.quantity })
-      .where(eq(schema.products.id, item.productId))
-      .run();
-  }
+    const order = db
+      .insert(schema.orders)
+      .values({
+        userId: req.userId!,
+        items: JSON.stringify(orderItems),
+        subtotal,
+        deliveryFee,
+        total,
+        paymentMethod,
+        deliveryLocation: deliveryLocation || null,
+        status: "yangi",
+      })
+      .returning()
+      .get();
 
+    return order;
+  });
+
+  const order = createOrder();
   res.json({ ...order, items: JSON.parse(order.items) });
-
   notifyNewOrder(order);
 });
 
@@ -124,21 +130,50 @@ router.patch("/:id/status", authMiddleware, adminMiddleware, (req, res) => {
   }
 
   const { status, cancelReason } = parsed.data;
-  const update: Record<string, unknown> = { status };
+  const orderId = Number(req.params.id);
 
-  if (status === "yetkazildi") update.deliveredAt = new Date().toISOString();
-  if (status === "bekor_qilindi") update.cancelReason = cancelReason || "Sabab ko'rsatilmagan";
+  const updateOrder = rawDb.transaction(() => {
+    const order = db.select().from(schema.orders).where(eq(schema.orders.id, orderId)).get();
+    if (!order) {
+      throw new Error("Buyurtma topilmadi");
+    }
 
-  db.update(schema.orders)
-    .set(update)
-    .where(eq(schema.orders.id, Number(req.params.id)))
-    .run();
+    if (status === "yetkazildi") {
+      db.update(schema.orders)
+        .set({ status, deliveredAt: new Date().toISOString() })
+        .where(eq(schema.orders.id, orderId))
+        .run();
+    } else if (status === "bekor_qilindi") {
+      const items: OrderItem[] =
+        typeof order.items === "string" ? JSON.parse(order.items) : order.items;
+      for (const item of items) {
+        db.update(schema.products)
+          .set({ stockQty: sql`stock_qty + ${item.quantity}` })
+          .where(eq(schema.products.id, item.productId))
+          .run();
+      }
+      db.update(schema.orders)
+        .set({ status, cancelReason: cancelReason || "Sabab ko'rsatilmagan" })
+        .where(eq(schema.orders.id, orderId))
+        .run();
+    } else {
+      db.update(schema.orders)
+        .set({ status })
+        .where(eq(schema.orders.id, orderId))
+        .run();
+    }
+  });
 
-  res.json({ ok: true });
+  try {
+    updateOrder();
+    res.json({ ok: true });
 
-  const order = db.select().from(schema.orders).where(eq(schema.orders.id, Number(req.params.id))).get();
-  if (order) {
-    notifyStatusChange(order.id, status as OrderStatus, order.userId, cancelReason);
+    const order = db.select().from(schema.orders).where(eq(schema.orders.id, orderId)).get();
+    if (order) {
+      notifyStatusChange(order.id, status as OrderStatus, order.userId, cancelReason);
+    }
+  } catch (e: unknown) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Xatolik yuz berdi" });
   }
 });
 

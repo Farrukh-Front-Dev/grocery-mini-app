@@ -36,11 +36,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     authorization = `Bearer ${webToken}`;
   }
 
-  const body = options.body && typeof options.body === "object"
-    ? JSON.stringify(options.body)
-    : (options.body as BodyInit | undefined);
+  const isFormData = options.body instanceof FormData;
+  const body = isFormData
+    ? (options.body as FormData)
+    : options.body && typeof options.body === "object"
+      ? JSON.stringify(options.body)
+      : (options.body as BodyInit | undefined);
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {};
+  if (!isFormData) headers["Content-Type"] = "application/json";
   if (authorization) headers.Authorization = authorization;
   if (options.headers) Object.assign(headers, options.headers);
 
