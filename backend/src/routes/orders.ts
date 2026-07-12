@@ -105,6 +105,7 @@ router.post("/", authMiddleware, (req, res) => {
         paymentMethod,
         deliveryLocation: deliveryLocation || null,
         status: "yangi",
+        createdAt: new Date().toISOString(),
       })
       .returning()
       .get();

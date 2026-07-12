@@ -111,6 +111,7 @@ router.post("/register", async (req: Request, res: Response) => {
     password: hashed,
     phone: phone || null,
     isAdmin: false,
+    createdAt: new Date().toISOString(),
   }).run();
 
   res.json({ ok: true });

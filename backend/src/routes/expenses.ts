@@ -33,6 +33,7 @@ router.post("/", authMiddleware, adminMiddleware, (req, res) => {
       description: parsed.data.description,
       amount: parsed.data.amount,
       createdByAdminId: req.userId!,
+      createdAt: new Date().toISOString(),
     })
     .returning()
     .get();

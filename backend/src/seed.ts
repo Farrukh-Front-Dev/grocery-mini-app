@@ -1,10 +1,10 @@
 import "dotenv/config";
+import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { db, schema } from "./db/index.js";
 import { config } from "./config.js";
 
 const userId = config.isDev ? 1 : 0;
-const adminId = config.ADMIN_IDS[0] || 1;
 
 // Create default user for dev mode
 const existing = db.select().from(schema.users).where(eq(schema.users.telegramId, userId)).get();
@@ -12,6 +12,23 @@ if (!existing) {
   db.insert(schema.users).values({ telegramId: userId, name: "Dev User", isAdmin: true }).run();
   console.log("Dev user created");
 }
+
+// Create web test users with bcrypt passwords
+async function seedUsers() {
+  const adminHash = await bcrypt.hash("admin", 12);
+  const userHash = await bcrypt.hash("user", 12);
+
+  if (!db.select().from(schema.users).where(eq(schema.users.username, "admin")).get()) {
+    db.insert(schema.users).values({ name: "Admin", username: "admin", password: adminHash, isAdmin: true }).run();
+    console.log("Admin user created (admin/admin)");
+  }
+  if (!db.select().from(schema.users).where(eq(schema.users.username, "user")).get()) {
+    db.insert(schema.users).values({ name: "User", username: "user", password: userHash, isAdmin: false }).run();
+    console.log("User user created (user/user)");
+  }
+}
+
+await seedUsers();
 
 // Create categories
 const catNames = [
